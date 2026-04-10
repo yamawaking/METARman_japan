@@ -1,30 +1,37 @@
 # METARman_japan
 ## Overview
-  **METARman_japan** shows you METAR from almost all of Japanese airport. Their locations are visualized on the map, and you can read their names and their current METAR if you click (on your PC) or tap (on your smartphone) the pin on their locations. His design, structure, and function are very simple that there is no need to worry about struggling or having trouble figuring out how to use him. You do not have to install anything but only visiting the url is enough. 
+  **METARman_japan** visualizes METAR data from nearly all Japanese airports. Each location is marked on an interactive map. By clicking (on PC) or tapping (on smartphone) the pins, you can view the airport name and its current METAR status. The design and structure are kept simple to ensure an intuitive user experience. No installation is required; simply visit the URL below to get started.
   **url: <https://yamawaking.github.io/METARman_japan/>**
   
 ## Structures and Functions
- ・He imports folium, requests, re, datetime, timezone, random, ThreadPoolExecutor.
+ ・__libraries__: he utilizes folium, requests, re, datetime, timezone, random, ThreadPoolExecutor.
+
+ ・__data sourse__: Real-time METAR data is fetched from *NOAA*. Please note that data may be unavailable if the source is down.
  
  ・The icao codes of all AIRPORTS he handle are below:
 
-*RJCC_RJCK_RJCW_RJCA_RJCO_RJSS_RJSU_RJSB_RJSH_RJSK_RJSC_RJSN_RJAA_RJTJ_RJTA_RJTU_RJTC_RJTI_RJNK_RJNS_RJNA_RJME_RJBB_RJBE_RJOA_RJOT_RJOK_RJFF_RJFT_RJFK_RJFY_ROAH_ROMC*
+*RJCC, RJCK, RJCW, RJCA, RJCO, RJSS, RJSU, RJSB, RJSH, RJSK, RJSC, RJSN, RJAA, RJTJ, RJTA, RJTU, RJTC, RJTI, RJNK, RJNS, RJNA, RJME, RJBB, RJBE, RJOA, RJOT, RJOK, RJFF, RJFT, RJFK, RJFY, ROAH, ROMC*
 
- ・He gets METAR data from NOAA, so if there is no data he cannot show you the METAR data.
- 
- ・His colorization rules of the METAR data and the location pins are below:
- 
- __wind speed__: If a _GUST_ occurs, he colorize it yellow.
- 
- __horizontal visibility__: If it is less than 9999, he colorize it blue.
- 
- __present weather__: If there is one or more present weather, he colorize them red.
- 
- __cloud__: If there is ceiling, he colorize it green.
- 
- __location pin__: If you can get the latest METAR, he colorize the pins blue. If you cannot, he colorize them orange (delayed data) or gray (no data).
- 
- ・The clock on the page indicates _UTC_.
+## Colorization Rules
+ To enhance visibility of critical weather changes, the following rules are applied:
+
+__Wind Speed__: Highlighted in *yellow* when a *GUST* is reported.
+
+__Visibility__: Highlighted in *blue* if horizontal visibility is less than 9999m.
+
+__Present Weather__: Any present weather conditions (e.g., rain, fog) are highlighted in *red*.
+
+__Clouds__: *Ceilings* are highlighted in *green*.
+
+__Location Pins__:
+
+*Blue*: Latest data is available.
+
+*Orange*: Delayed/Stale data.
+
+*Gray*: No data available.
+
+Clock: The on-screen clock indicates UTC (Coordinated Universal Time).
 
  ## Result
 
