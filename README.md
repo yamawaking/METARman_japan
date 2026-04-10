@@ -27,3 +27,5 @@
  ・The clock on the page indicates _UTC_.
 
  ## Result
+
+![result](1000005348.png)
