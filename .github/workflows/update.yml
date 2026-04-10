@@ -3,17 +3,22 @@ name: Update METAR Map
 on:
   schedule:
     - cron: '0 * * * *'  # 1時間おきに実行
-  workflow_dispatch:      # 手動実行も可能にする
+  workflow_dispatch:      # 手動実行ボタンを有効にする
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:         # 権限をここで明示的に追加
+      contents: write
+      pages: write
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: setup-python@v4
+        uses: actions/setup-python@v4  # ← ここを修正しました
         with:
           python-version: '3.9'
 
