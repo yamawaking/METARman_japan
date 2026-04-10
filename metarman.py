@@ -48,118 +48,81 @@ AIRPORTS = {
     "ROAH": {"name": "那覇空港/基地", "lat": 26.2044, "lon": 127.6461}, "RODN": {"name": "嘉手納基地", "lat": 26.3556, "lon": 127.7675},
     "ROMC": {"name": "普天間基地", "lat": 26.2731, "lon": 127.7581}, "ROIG": {"name": "新石垣空港", "lat": 24.3964, "lon": 124.2450},
 }
-
 def get_status(metar_line):
-    if not metar_line: return "lightgray", "NO DATA"
-    try:
-        match = re.search(r'(\d{2})(\d{2})(\d{2})Z', metar_line)
-        if not match: return "lightgray", "UNKNOWN"
-        day, hour, minute = map(int, match.groups())
-        now = datetime.now(timezone.utc)
-        rep_time = now.replace(day=day, hour=hour, minute=minute, second=0, microsecond=0)
-        diff = (now - rep_time).total_seconds()
-        if 0 <= diff < 10800: return "blue", "ACTIVE"
-        elif diff < 86400: return "orange", "DELAYED"
-        else: return "lightgray", "STALE"
-    except: return "lightgray", "ERROR"
+    """METARから色とガストの有無を判定する"""
+    if not metar_line or metar_line == "No data":
+        return "gray", False
 
-def colorize_metar(metar):
-    if not metar: return ""
-    tokens = metar.split()
-    res = []
-    weather_codes = ["RA", "SN", "FG", "TS", "BR", "HZ", "DZ", "VCSH", "SHRA"]
-    for t in tokens:
-        if "KT" in t: res.append(f'<span style="color:yellow;">{t}</span>')
-        elif any(c in t for c in weather_codes): res.append(f'<span style="color:red;">{t}</span>')
-        elif t.startswith(("BKN","OVC","VV")): res.append(f'<span style="color:lime;">{t}</span>')
-        elif re.fullmatch(r'\d{4}', t): res.append(f'<span style="color:cyan;">{t}</span>')
-        else: res.append(t)
-    return " ".join(res)
-
-def fetch_url(url):
-    try:
-        res = requests.get(url, timeout=10)
-        if res.status_code == 200: return res.text
-    except: pass
-    return None
-
-def main():
-    icao_list = list(AIRPORTS.keys())
-    metar_storage = {icao: [] for icao in icao_list}
+    # ガスト判定: "G"と"KT"が両方含まれる場合のみガストありとみなす
+    # 空港名にGが含まれる誤作動を防ぎます
+    has_gust = "G" in metar_line and "KT" in metar_line
     
-    # --- 並列処理でデータ取得速度を向上 ---
-    urls = [
-        f"https://www.aviationweather.gov/api/data/metar?ids={','.join(icao_list)}&format=raw&hours=24&v={random.randint(1,999)}",
-        f"https://tgftp.nws.noaa.gov/data/observations/metar/cycles/{(datetime.now(timezone.utc).minute // 10 * 10):02d}Z.TXT"
-    ]
-    
-    print("🚀 高速データ取得中...")
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        results = list(executor.map(fetch_url, urls))
-
-    # データ解析
-    for text in results:
-        if not text: continue
-        for line in text.splitlines():
-            for icao in icao_list:
-                # 行の先頭か、途中にICAO + 時刻フォーマットがあるかチェック
-                if icao in line and re.search(rf"{icao}\s\d{{6}}Z", line):
-                    clean = line[line.find(icao):].replace('=', '').strip()
-                    if len(clean) > 10: metar_storage[icao].append(clean)
-
-    # マップ作成
-    m = folium.Map(location=[36.5, 137.5], zoom_start=5, tiles='CartoDB positron')
-    
-    # UTC Clock UI (そのまま継承)
-    clock_html = '''
-    <div id="utc_box" style="position:fixed; top:20px; left:60px; width:150px; height:45px; 
-    background:rgba(0,0,0,0.85); color:#0f0; border:1px solid #555; border-radius:5px; 
-    z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; 
-    font-family:monospace; box-shadow: 2px 2px 10px rgba(0,0,0,0.5);">
-        <div style="font-size:9px; color:#fff;">UTC CLOCK</div>
-        <div id="utc_time" style="font-size:20px; font-weight:bold;">00:00:00</div>
-    </div>
-    <script>
-        setInterval(() => {
-            const now = new Date();
-            const h = String(now.getUTCHours()).padStart(2, '0');
-            const m = String(now.getUTCMinutes()).padStart(2, '0');
-            const s = String(now.getUTCSeconds()).padStart(2, '0');
-            document.getElementById('utc_time').textContent = `${h}:${m}:${s}`;
-        }, 1000);
-    </script>
-    '''
-    m.get_root().html.add_child(folium.Element(clock_html))
-
-    for icao, info in AIRPORTS.items():
-        logs = sorted(list(set(metar_storage[icao])), reverse=True)
-        color, status_text = get_status(logs[0] if logs else None)
+    # 色判定
+    if "FG" in metar_line or "BR" in metar_line:
+        return "orange", has_gust
+    if has_gust:
+        return "orange", True # ガストありはオレンジ（黄文字）
         
-        current = colorize_metar(logs[0]) if logs else '<span style="color:gray;">No Data</span>'
-        hist_rows = "".join([f'<tr><td style="border-bottom:1px solid #444; padding:5px 0; font-family:monospace; font-size:12px;">{colorize_metar(l)}</td></tr>' for l in logs[1:6]])
+    return "blue", False
 
-        pop_html = f"""<div style="width:450px; background-color:#1a1a1a; color:white; padding:15px; border-radius:10px;">
-            <div style="display:flex; border-bottom:2px solid #555; padding-bottom:5px;">
-                <span style="font-size:17px; font-weight:bold;">{info['name']} ({icao})</span>
-                <span style="margin-left:auto; background:{color}; color:white; padding:2px 8px; border-radius:4px; font-size:10px;">{status_text}</span>
-            </div>
-            <div style="margin:10px 0;">
-                <div style="font-size:11px; color:#0f0;">● LATEST</div>
-                <div style="background:#000; padding:10px; border-radius:5px; font-size:15px; border-left:5px solid {color}; line-height:1.4;">{current}</div>
-            </div>
-            <div style="max-height:120px; overflow-y:auto; background:#000; padding:5px 10px; border-radius:5px;">
-                <table style="width:100%; border-collapse:collapse;">{hist_rows if hist_rows else "<tr><td>No History</td></tr>"}</table>
-            </div>
-        </div>"""
+# --- メイン処理 ---
+m = folium.Map(location=[35.0, 135.0], zoom_start=5)
 
-        folium.Marker(
-            [info['lat'], info['lon']],
-            popup = folium.Popup(content, max_width=250),
-            icon=folium.Icon(color=color)
-        ).add_to(m)
+# UTC時計の埋め込み（画面左上に固定）
+utc_clock_html = '''
+<div style="position: fixed; top: 10px; left: 50px; width: 150px; height: 40px; 
+            background-color: rgba(255,255,255,0.8); border:2px solid grey; z-index:9999; 
+            font-size:14px; font-weight:bold; text-align:center; line-height:40px; border-radius:5px;">
+    UTC: <span id="utc_clock"></span>
+</div>
+<script>
+    function updateClock() {
+        var now = new Date();
+        var utc = now.toISOString().replace('T', ' ').substring(0, 19);
+        document.getElementById('utc_clock').innerHTML = utc.split(' ')[1];
+    }
+    setInterval(updateClock, 1000);
+</script>
+'''
+m.get_root().html.add_child(folium.Element(utc_clock_html))
 
-    m.save("index.html")
-    print(f"✅ 全{len(AIRPORTS)}地点、高速処理完了。")
+for icao, info in AIRPORTS.items():
+    metar = get_metar(icao)
+    history = get_history(icao) # 24時間履歴を取得
+    color_name, gust_flag = get_status(metar)
+    
+    # 履歴テーブルのHTML作成
+    history_html = "<table style='width:100%; font-size:10px; border-collapse: collapse;'>"
+    history_html += "<tr style='background:#eee;'><th>Time</th><th>METAR</th></tr>"
+    for h_time, h_metar in history:
+        history_html += f"<tr><td style='border-bottom:1px solid #ddd;'>{h_time}</td><td style='border-bottom:1px solid #ddd;'>{h_metar}</td></tr>"
+    history_html += "</table>"
 
-if __name__ == "__main__":
-    main()
+    # 【改善版】スマホ対応ポップアップHTML
+    # max_widthとの組み合わせで、スマホでもはみ出さないように設定
+    content = f"""
+    <div style="font-family: sans-serif; width: 240px;">
+        <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid {color_name}; margin-bottom: 5px;">
+            {icao} ({info['name']})
+        </div>
+        <div style="font-size: 12px; background: #f9f9f9; padding: 5px; border-radius: 3px; margin-bottom: 10px; word-wrap: break-word;">
+            <strong>Latest:</strong> {metar}
+            {' <b style="color:orange;">(GUST!)</b>' if gust_flag else ''}
+        </div>
+        <div style="font-size: 11px; font-weight: bold; margin-bottom: 3px;">24h History:</div>
+        <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc;">
+            {history_html}
+        </div>
+    </div>
+    """
+
+    # Popupオブジェクトの作成（スマホ対応：幅を制限）
+    popup_obj = folium.Popup(content, max_width=260)
+
+    folium.Marker(
+        location=info["coords"],
+        popup=popup_obj,
+        icon=folium.Icon(color=color_name, icon="plane", prefix="fa")
+    ).add_to(m)
+
+m.save("index.html")
