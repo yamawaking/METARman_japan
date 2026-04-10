@@ -6,7 +6,7 @@ import time
 import random
 from concurrent.futures import ThreadPoolExecutor
 
-# --- 1. 飛行場データ（そのまま継承） ---
+#airports icao_code, name, location
 AIRPORTS = {
     # 北海道
     "RJCC": {"name": "新千歳空港", "lat": 42.7752, "lon": 141.6923}, "RJCH": {"name": "函館空港", "lat": 41.7700, "lon": 140.8219},
@@ -49,6 +49,7 @@ AIRPORTS = {
     "ROMC": {"name": "普天間基地", "lat": 26.2731, "lon": 127.7581}, "ROIG": {"name": "新石垣空港", "lat": 24.3964, "lon": 124.2450},
 }
 
+
 def get_status(metar_line):
     if not metar_line: return "lightgray", "NO DATA"
     try:
@@ -67,36 +68,35 @@ def colorize_metar(metar):
     if not metar: return ""
     tokens = metar.split()
     res = []
-    # 天気現象コード
+    #present weathers
     weather_codes = ["RA", "SN", "FG", "TS", "BR", "HZ", "DZ", "VCSH", "SHRA"]
     
     for t in tokens:
-        # --- 1. 風速(KT)の判定 ---
+        #colorization of wind speed and gust
         if "KT" in t:
             if "G" in t:
                 res.append(f'<span style="color:yellow;">{t}</span>') # ガストは黄色
             else:
                 res.append(f'<span style="color:white;">{t}</span>') # ガストなしは強制的に白
         
-        # --- 2. 視程(4桁数字)の判定 ---
-        # 360度方向（VRB）や滑走路視程と被らないよう、純粋な4桁数字のみ判定
+        #horizontal visibility
         elif re.fullmatch(r'\d{4}', t):
             if t == "9999":
                 res.append(f'<span style="color:white;">{t}</span>') # 9999は強制的に白
             else:
                 res.append(f'<span style="color:cyan;">{t}</span>') # 9999未満は水色
         
-        # --- 3. 天気現象（雨・霧など） ---
+        #present weather
         elif any(c in t for c in weather_codes): 
             res.append(f'<span style="color:red;">{t}</span>')
             
-        # --- 4. 雲量（BKN/OVC/VV） ---
+        #clouds
         elif t.startswith(("BKN","OVC","VV")): 
             res.append(f'<span style="color:lime;">{t}</span>')
 
-        # --- 5. それ以外（ICAO、時刻、CAVOK、FEW、SCTなど） ---
+        #others
         else:
-            # 基本はすべて白で表示させる
+            #basically white
             res.append(f'<span style="color:white;">{t}</span>')
             
     return " ".join(res)
@@ -112,17 +112,16 @@ def main():
     icao_list = list(AIRPORTS.keys())
     metar_storage = {icao: [] for icao in icao_list}
     
-    # --- 並列処理でデータ取得速度を向上 ---
     urls = [
         f"https://www.aviationweather.gov/api/data/metar?ids={','.join(icao_list)}&format=raw&hours=24&v={random.randint(1,999)}",
         f"https://tgftp.nws.noaa.gov/data/observations/metar/cycles/{(datetime.now(timezone.utc).minute // 10 * 10):02d}Z.TXT"
     ]
     
-    print("🚀 高速データ取得中...")
+    print(wait a moment)
     with ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(fetch_url, urls))
 
-    # データ解析
+    #analysis
     for text in results:
         if not text: continue
         for line in text.splitlines():
@@ -131,10 +130,10 @@ def main():
                     clean = line[line.find(icao):].replace('=', '').strip()
                     if len(clean) > 10: metar_storage[icao].append(clean)
 
-    # マップ作成
+    #map
     m = folium.Map(location=[36.5, 137.5], zoom_start=5, tiles='CartoDB positron')
     
-    # UTC Clock UI (そのまま継承)
+    # UTC Clock
     clock_html = '''
     <div id="utc_box" style="position:fixed; top:20px; left:60px; width:150px; height:45px; 
     background:rgba(0,0,0,0.85); color:#0f0; border:1px solid #555; border-radius:5px; 
@@ -162,7 +161,7 @@ def main():
         current = colorize_metar(logs[0]) if logs else '<span style="color:gray;">No Data</span>'
         hist_rows = "".join([f'<tr><td style="border-bottom:1px solid #444; padding:5px 0; font-family:monospace; font-size:11px;">{colorize_metar(l)}</td></tr>' for l in logs[1:6]])
 
-        # ポップアップのデザイン修正：widthを260pxに制限
+        #popup
         pop_html = f"""<div style="width:260px; background-color:#1a1a1a; color:white; padding:12px; border-radius:10px; font-family:sans-serif;">
             <div style="display:flex; border-bottom:2px solid #555; padding-bottom:5px; align-items:center;">
                 <span style="font-size:14px; font-weight:bold;">{info['name']} ({icao})</span>
