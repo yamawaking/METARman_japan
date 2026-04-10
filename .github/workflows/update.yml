@@ -2,20 +2,24 @@ name: Update METAR Map
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 1時間おきに自動実行
-  workflow_dispatch:      # 今すぐ動かすボタンを有効化
+    - cron: '0 * * * *'  # 1時間おきに実行
+  workflow_dispatch:      # 手動実行ボタンを有効にする
+
+# ページ公開に必要な権限を設定
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write    # これが重要：ファイルを書き換える許可
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4  # ← ここがエラーの原因でした。修正済みです！
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -25,20 +29,18 @@ jobs:
       - name: Run script
         run: python metarman.py
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_filename: index.html
-      - name: Run script
-        run: python metarman.py
-
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: . # 今いる場所にあるファイルを全部公開用にまとめる
+          path: '.'  # index.htmlがある場所を指定
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
