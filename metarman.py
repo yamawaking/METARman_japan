@@ -69,16 +69,28 @@ def colorize_metar(metar):
     res = []
     weather_codes = ["RA", "SN", "FG", "TS", "BR", "HZ", "DZ", "VCSH", "SHRA"]
     for t in tokens:
-        # 風速(KT)の判定：Gが含まれていれば黄色、そうでなければシアン
+        # 1. 風速(KT)の判定
         if "KT" in t:
             if "G" in t:
-                res.append(f'<span style="color:yellow;">{t}</span>')
+                res.append(f'<span style="color:yellow;">{t}</span>') # ガストは黄色
             else:
-                res.append(f'<span style="color:cyan;">{t}</span>')
-        elif any(c in t for c in weather_codes): res.append(f'<span style="color:red;">{t}</span>')
-        elif t.startswith(("BKN","OVC","VV")): res.append(f'<span style="color:lime;">{t}</span>')
-        elif re.fullmatch(r'\d{4}', t): res.append(f'<span style="color:cyan;">{t}</span>')
-        else: res.append(t)
+                res.append(f'<span style="color:white;">{t}</span>') # 通常は白
+        
+        # 2. 視程(4桁数字)の判定
+        elif re.fullmatch(r'\d{4}', t):
+            if t == "9999":
+                res.append(f'<span style="color:white;">{t}</span>') # 9999は白
+            else:
+                res.append(f'<span style="color:cyan;">{t}</span>') # 9999未満は水色
+        
+        # 3. その他（天気現象や雲量）の着色（そのまま継承）
+        elif any(c in t for c in weather_codes): 
+            res.append(f'<span style="color:red;">{t}</span>')
+        elif t.startswith(("BKN","OVC","VV")): 
+            res.append(f'<span style="color:lime;">{t}</span>')
+            
+        else:
+            res.append(t)
     return " ".join(res)
 
 def fetch_url(url):
