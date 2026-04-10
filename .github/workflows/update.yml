@@ -27,7 +27,7 @@ jobs:
         run: pip install folium requests
 
       - name: Run script
-        run: python metarman.py
+        run: python metarmap.py
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
