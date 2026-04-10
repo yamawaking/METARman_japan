@@ -1,12 +1,9 @@
 import folium
 import requests
+from datetime import datetime
 import re
-from datetime import datetime, timezone
-import time
-import random
-from concurrent.futures import ThreadPoolExecutor
 
-# --- 1. 飛行場データ（大幅拡充） ---
+ --- 1. 飛行場データ（大幅拡充） ---
 AIRPORTS = {
     # 北海道
     "RJCC": {"name": "新千歳空港", "lat": 42.7752, "lon": 141.6923}, "RJCH": {"name": "函館空港", "lat": 41.7700, "lon": 140.8219},
@@ -48,19 +45,32 @@ AIRPORTS = {
     "ROAH": {"name": "那覇空港/基地", "lat": 26.2044, "lon": 127.6461}, "RODN": {"name": "嘉手納基地", "lat": 26.3556, "lon": 127.7675},
     "ROMC": {"name": "普天間基地", "lat": 26.2731, "lon": 127.7581}, "ROIG": {"name": "新石垣空港", "lat": 24.3964, "lon": 124.2450},
 }
+
+def get_metar(icao):
+    """最新のMETARを取得"""
+    url = f"https://tgftp.nws.noaa.gov/data/observations/metar/stations/{icao}.TXT"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.text.split('\n')[1]
+    except:
+        pass
+    return "No data"
+
+def get_history(icao):
+    """24時間履歴（ダミーまたは簡易版）"""
+    # 実際はNOAAの履歴取得ロジックが入りますが、エラー回避のため空リストを返せるようにします
+    return []
+
 def get_status(metar_line):
-    """METARから色とガストの有無を判定する"""
+    """色とガストの判定"""
     if not metar_line or metar_line == "No data":
         return "gray", False
-    
-    # ガスト判定: 文字列に "G" と "KT" があればガストありとみなす
     has_gust = "G" in metar_line and "KT" in metar_line
-    
     if "FG" in metar_line or "BR" in metar_line:
         return "orange", has_gust
     if has_gust:
         return "orange", True
-        
     return "blue", False
 
 def main():
@@ -85,7 +95,6 @@ def main():
     '''
     m.get_root().html.add_child(folium.Element(utc_clock_html))
 
-    # 各空港のマーカー作成
     for icao, info in AIRPORTS.items():
         metar = get_metar(icao)
         history = get_history(icao)
@@ -98,7 +107,7 @@ def main():
             history_html += f"<tr><td style='border-bottom:1px solid #ddd;'>{h_time}</td><td style='border-bottom:1px solid #ddd;'>{h_metar}</td></tr>"
         history_html += "</table>"
 
-        # 2. ポップアップの中身 (必ず popup_obj を作る前に定義)
+        # 2. ポップアップの中身 (必ずここで定義)
         content = f"""
         <div style="font-family: sans-serif; width: 240px;">
             <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid {color_name}; margin-bottom: 5px;">
@@ -118,16 +127,14 @@ def main():
         # 3. Popupオブジェクト作成
         popup_obj = folium.Popup(content, max_width=260)
 
-        # 4. マーカー追加
+        # 4. マーカー作成
         folium.Marker(
             location=info["coords"],
             popup=popup_obj,
             icon=folium.Icon(color=color_name, icon="plane", prefix="fa")
         ).add_to(m)
 
-    # 保存
     m.save("index.html")
 
-# プログラムの実行
 if __name__ == "__main__":
     main()
