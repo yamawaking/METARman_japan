@@ -154,7 +154,7 @@ def main():
 
         folium.Marker(
             [info['lat'], info['lon']],
-            popup=folium.Popup(pop_html, max_width=500),
+            popup = folium.Popup(content, max_width=250),
             icon=folium.Icon(color=color)
         ).add_to(m)
 
