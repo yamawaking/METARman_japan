@@ -1,7 +1,7 @@
 # METARmap_japan
 ## Overview
   **METARmap_japan** visualizes METAR data from nearly all Japanese airports. Each location is marked on an interactive map. By clicking (on PC) or tapping (on smartphone) the pins, you can view the airport name and its current METAR status. The design and structure are kept simple to ensure an intuitive user experience. No installation is required; simply visit the URL below to get started.
-  **url: <https://yamawaking.github.io/METARman_japan/>**
+  **url: <https://yamawaking.github.io/METARmap_japan/>**
   
 ## Structures and Functions
  ・__libraries__: he utilizes folium, requests, re, datetime, timezone, random, ThreadPoolExecutor.
