@@ -2,23 +2,20 @@ name: Update METAR Map
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 1時間おきに実行
-  workflow_dispatch:      # 手動実行ボタンを有効にする
+    - cron: '0 * * * *'  # 1時間おきに自動実行
+  workflow_dispatch:      # 今すぐ動かすボタンを有効化
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:         # 権限をここで明示的に追加
-      contents: write
-      pages: write
-      id-token: write
-
+    permissions:
+      contents: write    # これが重要：ファイルを書き換える許可
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4  # ← ここを修正しました
+        uses: actions/setup-python@v4  # ← ここがエラーの原因でした。修正済みです！
         with:
           python-version: '3.9'
 
@@ -34,3 +31,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .
           publish_filename: index.html
+          force_orphan: true
