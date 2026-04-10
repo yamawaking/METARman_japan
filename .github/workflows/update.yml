@@ -31,4 +31,14 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .
           publish_filename: index.html
-          force_orphan: true
+      - name: Run script
+        run: python metarman.py
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: . # 今いる場所にあるファイルを全部公開用にまとめる
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
