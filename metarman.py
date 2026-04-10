@@ -52,54 +52,53 @@ def get_status(metar_line):
     """METARから色とガストの有無を判定する"""
     if not metar_line or metar_line == "No data":
         return "gray", False
-
-    # ガスト判定: "G"と"KT"が両方含まれる場合のみガストありとみなす
-    # 空港名にGが含まれる誤作動を防ぎます
+    
+    # ガスト判定: 文字列に "G" と "KT" があればガストありとみなす
     has_gust = "G" in metar_line and "KT" in metar_line
     
-    # 色判定
     if "FG" in metar_line or "BR" in metar_line:
         return "orange", has_gust
     if has_gust:
-        return "orange", True # ガストありはオレンジ（黄文字）
+        return "orange", True
         
     return "blue", False
 
-# --- メイン処理 ---
-m = folium.Map(location=[35.0, 135.0], zoom_start=5)
+def main():
+    # 地図の初期化
+    m = folium.Map(location=[35.0, 135.0], zoom_start=5)
 
-# UTC時計の埋め込み（画面左上に固定）
-utc_clock_html = '''
-<div style="position: fixed; top: 10px; left: 50px; width: 150px; height: 40px; 
-            background-color: rgba(255,255,255,0.8); border:2px solid grey; z-index:9999; 
-            font-size:14px; font-weight:bold; text-align:center; line-height:40px; border-radius:5px;">
-    UTC: <span id="utc_clock"></span>
-</div>
-<script>
-    function updateClock() {
-        var now = new Date();
-        var utc = now.toISOString().replace('T', ' ').substring(0, 19);
-        document.getElementById('utc_clock').innerHTML = utc.split(' ')[1];
-    }
-    setInterval(updateClock, 1000);
-</script>
-'''
-m.get_root().html.add_child(folium.Element(utc_clock_html))
+    # UTC時計の埋め込み
+    utc_clock_html = '''
+    <div style="position: fixed; top: 10px; left: 50px; width: 150px; height: 40px; 
+                background-color: rgba(255,255,255,0.8); border:2px solid grey; z-index:9999; 
+                font-size:14px; font-weight:bold; text-align:center; line-height:40px; border-radius:5px;">
+        UTC: <span id="utc_clock"></span>
+    </div>
+    <script>
+        function updateClock() {
+            var now = new Date();
+            var utc = now.toISOString().replace('T', ' ').substring(0, 19);
+            document.getElementById('utc_clock').innerHTML = utc.split(' ')[1];
+        }
+        setInterval(updateClock, 1000);
+    </script>
+    '''
+    m.get_root().html.add_child(folium.Element(utc_clock_html))
 
-# --- ここからループ内の処理 ---
+    # 各空港のマーカー作成
     for icao, info in AIRPORTS.items():
         metar = get_metar(icao)
-        history = get_history(icao)  # 24時間履歴を取得
+        history = get_history(icao)
         color_name, gust_flag = get_status(metar)
         
-        # 1. 履歴テーブルのHTML作成
+        # 1. 履歴テーブルHTML
         history_html = "<table style='width:100%; font-size:10px; border-collapse: collapse;'>"
         history_html += "<tr style='background:#eee;'><th>Time</th><th>METAR</th></tr>"
         for h_time, h_metar in history:
             history_html += f"<tr><td style='border-bottom:1px solid #ddd;'>{h_time}</td><td style='border-bottom:1px solid #ddd;'>{h_metar}</td></tr>"
         history_html += "</table>"
 
-        # 2. ポップアップの中身(content)を定義（※ここで先に定義するのが重要！）
+        # 2. ポップアップの中身 (必ず popup_obj を作る前に定義)
         content = f"""
         <div style="font-family: sans-serif; width: 240px;">
             <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid {color_name}; margin-bottom: 5px;">
@@ -116,15 +115,19 @@ m.get_root().html.add_child(folium.Element(utc_clock_html))
         </div>
         """
 
-        # 3. Popupオブジェクトを作成（ここでcontentを使用）
+        # 3. Popupオブジェクト作成
         popup_obj = folium.Popup(content, max_width=260)
 
-        # 4. マーカーを作成して地図に追加
+        # 4. マーカー追加
         folium.Marker(
             location=info["coords"],
             popup=popup_obj,
             icon=folium.Icon(color=color_name, icon="plane", prefix="fa")
         ).add_to(m)
 
-    # ループが終わったら保存
+    # 保存
     m.save("index.html")
+
+# プログラムの実行
+if __name__ == "__main__":
+    main()
