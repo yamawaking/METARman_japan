@@ -67,30 +67,38 @@ def colorize_metar(metar):
     if not metar: return ""
     tokens = metar.split()
     res = []
+    # 天気現象コード
     weather_codes = ["RA", "SN", "FG", "TS", "BR", "HZ", "DZ", "VCSH", "SHRA"]
+    
     for t in tokens:
-        # 1. 風速(KT)の判定
+        # --- 1. 風速(KT)の判定 ---
         if "KT" in t:
             if "G" in t:
                 res.append(f'<span style="color:yellow;">{t}</span>') # ガストは黄色
             else:
-                res.append(f'<span style="color:white;">{t}</span>') # 通常は白
+                res.append(f'<span style="color:white;">{t}</span>') # ガストなしは強制的に白
         
-        # 2. 視程(4桁数字)の判定
+        # --- 2. 視程(4桁数字)の判定 ---
+        # 360度方向（VRB）や滑走路視程と被らないよう、純粋な4桁数字のみ判定
         elif re.fullmatch(r'\d{4}', t):
             if t == "9999":
-                res.append(f'<span style="color:white;">{t}</span>') # 9999は白
+                res.append(f'<span style="color:white;">{t}</span>') # 9999は強制的に白
             else:
                 res.append(f'<span style="color:cyan;">{t}</span>') # 9999未満は水色
         
-        # 3. その他（天気現象や雲量）の着色（そのまま継承）
+        # --- 3. 天気現象（雨・霧など） ---
         elif any(c in t for c in weather_codes): 
             res.append(f'<span style="color:red;">{t}</span>')
+            
+        # --- 4. 雲量（BKN/OVC/VV） ---
         elif t.startswith(("BKN","OVC","VV")): 
             res.append(f'<span style="color:lime;">{t}</span>')
-            
+
+        # --- 5. それ以外（ICAO、時刻、CAVOK、FEW、SCTなど） ---
         else:
-            res.append(t)
+            # 基本はすべて白で表示させる
+            res.append(f'<span style="color:white;">{t}</span>')
+            
     return " ".join(res)
 
 def fetch_url(url):
