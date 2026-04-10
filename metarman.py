@@ -86,43 +86,45 @@ utc_clock_html = '''
 '''
 m.get_root().html.add_child(folium.Element(utc_clock_html))
 
-for icao, info in AIRPORTS.items():
-    metar = get_metar(icao)
-    history = get_history(icao) # 24時間履歴を取得
-    color_name, gust_flag = get_status(metar)
-    
-    # 履歴テーブルのHTML作成
-    history_html = "<table style='width:100%; font-size:10px; border-collapse: collapse;'>"
-    history_html += "<tr style='background:#eee;'><th>Time</th><th>METAR</th></tr>"
-    for h_time, h_metar in history:
-        history_html += f"<tr><td style='border-bottom:1px solid #ddd;'>{h_time}</td><td style='border-bottom:1px solid #ddd;'>{h_metar}</td></tr>"
-    history_html += "</table>"
+# --- ここからループ内の処理 ---
+    for icao, info in AIRPORTS.items():
+        metar = get_metar(icao)
+        history = get_history(icao)  # 24時間履歴を取得
+        color_name, gust_flag = get_status(metar)
+        
+        # 1. 履歴テーブルのHTML作成
+        history_html = "<table style='width:100%; font-size:10px; border-collapse: collapse;'>"
+        history_html += "<tr style='background:#eee;'><th>Time</th><th>METAR</th></tr>"
+        for h_time, h_metar in history:
+            history_html += f"<tr><td style='border-bottom:1px solid #ddd;'>{h_time}</td><td style='border-bottom:1px solid #ddd;'>{h_metar}</td></tr>"
+        history_html += "</table>"
 
-    # 【改善版】スマホ対応ポップアップHTML
-    # max_widthとの組み合わせで、スマホでもはみ出さないように設定
-    content = f"""
-    <div style="font-family: sans-serif; width: 240px;">
-        <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid {color_name}; margin-bottom: 5px;">
-            {icao} ({info['name']})
+        # 2. ポップアップの中身(content)を定義（※ここで先に定義するのが重要！）
+        content = f"""
+        <div style="font-family: sans-serif; width: 240px;">
+            <div style="font-size: 14px; font-weight: bold; border-bottom: 2px solid {color_name}; margin-bottom: 5px;">
+                {icao} ({info['name']})
+            </div>
+            <div style="font-size: 11px; background: #f9f9f9; padding: 5px; border-radius: 3px; margin-bottom: 10px; word-wrap: break-word;">
+                <strong>Latest:</strong> {metar}
+                {' <b style="color:orange;">(GUST!)</b>' if gust_flag else ''}
+            </div>
+            <div style="font-size: 11px; font-weight: bold; margin-bottom: 3px;">24h History:</div>
+            <div style="max-height: 120px; overflow-y: auto; border: 1px solid #ccc;">
+                {history_html}
+            </div>
         </div>
-        <div style="font-size: 12px; background: #f9f9f9; padding: 5px; border-radius: 3px; margin-bottom: 10px; word-wrap: break-word;">
-            <strong>Latest:</strong> {metar}
-            {' <b style="color:orange;">(GUST!)</b>' if gust_flag else ''}
-        </div>
-        <div style="font-size: 11px; font-weight: bold; margin-bottom: 3px;">24h History:</div>
-        <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc;">
-            {history_html}
-        </div>
-    </div>
-    """
+        """
 
-    # Popupオブジェクトの作成（スマホ対応：幅を制限）
-    popup_obj = folium.Popup(content, max_width=260)
+        # 3. Popupオブジェクトを作成（ここでcontentを使用）
+        popup_obj = folium.Popup(content, max_width=260)
 
-    folium.Marker(
-        location=info["coords"],
-        popup=popup_obj,
-        icon=folium.Icon(color=color_name, icon="plane", prefix="fa")
-    ).add_to(m)
+        # 4. マーカーを作成して地図に追加
+        folium.Marker(
+            location=info["coords"],
+            popup=popup_obj,
+            icon=folium.Icon(color=color_name, icon="plane", prefix="fa")
+        ).add_to(m)
 
-m.save("index.html")
+    # ループが終わったら保存
+    m.save("index.html")
