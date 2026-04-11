@@ -117,7 +117,7 @@ def main():
         f"https://tgftp.nws.noaa.gov/data/observations/metar/cycles/{(datetime.now(timezone.utc).minute // 10 * 10):02d}Z.TXT"
     ]
     
-    print(wait a moment)
+    ("wait a moment")
     with ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(fetch_url, urls))
 
@@ -184,7 +184,7 @@ def main():
         ).add_to(m)
 
     m.save("index.html")
-    print(f"✅ 全{len(AIRPORTS)}地点、高速処理完了。")
+    (f"✅ 全{len(AIRPORTS)}地点 complete。")
 
 if __name__ == "__main__":
     main()
