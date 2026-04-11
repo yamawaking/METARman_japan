@@ -4,11 +4,11 @@
   **url: <https://yamawaking.github.io/METARmap_japan/>**
   
 ## Structures and Functions
- ・__libraries__: he utilizes folium, requests, re, datetime, timezone, random, ThreadPoolExecutor.
+ __libraries__: he utilizes folium, requests, re, datetime, timezone, random, ThreadPoolExecutor.
 
- ・__data sourse__: Real-time METAR data is fetched from *NOAA*. Please note that data may be unavailable if the source is down.
+ __data sourse__: Real-time METAR data is fetched from *NOAA*. Please note that data may be unavailable if the source is down.
  
- ・The icao codes of all AIRPORTS he handle are below:
+ __airports__: The icao codes of all AIRPORTS he handle are below:
 
 *RJCC, RJCK, RJCW, RJCA, RJCO, RJSS, RJSU, RJSB, RJSH, RJSK, RJSC, RJSN, RJAA, RJTJ, RJTA, RJTU, RJTC, RJTI, RJNK, RJNS, RJNA, RJME, RJBB, RJBE, RJOA, RJOT, RJOK, RJFF, RJFT, RJFK, RJFY, ROAH, ROMC*
 
@@ -33,7 +33,7 @@ __Location Pins__:
 
 *Gray*: No data available.
 
-Clock: The on-screen clock indicates UTC (Coordinated Universal Time).
+__Clock__: The on-screen clock indicates UTC (Coordinated Universal Time).
 
  ## Result
 
