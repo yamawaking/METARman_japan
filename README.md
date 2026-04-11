@@ -12,6 +12,8 @@
 
 *RJCC, RJCK, RJCW, RJCA, RJCO, RJSS, RJSU, RJSB, RJSH, RJSK, RJSC, RJSN, RJAA, RJTJ, RJTA, RJTU, RJTC, RJTI, RJNK, RJNS, RJNA, RJME, RJBB, RJBE, RJOA, RJOT, RJOK, RJFF, RJFT, RJFK, RJFY, ROAH, ROMC*
 
+・__re-run__: This code is set up to re-run *every hour*, so that the latest METAR is always displayed.
+
 ## Colorization Rules
  To enhance visibility of critical weather changes, the following rules are applied:
 
