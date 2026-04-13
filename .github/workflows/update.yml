@@ -2,7 +2,7 @@ name: Update METAR Map
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 1時間おきに実行
+    - cron: '7 * * * *'  # 1時間おきに実行
   workflow_dispatch:      # 手動実行ボタンを有効にする
 
 # ページ公開に必要な権限を設定
