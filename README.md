@@ -12,7 +12,15 @@
 
 *RJCC, RJCK, RJCW, RJCA, RJCO, RJSS, RJSU, RJSB, RJSH, RJSK, RJSC, RJSN, RJAA, RJTJ, RJTA, RJTU, RJTC, RJTI, RJNK, RJNS, RJNA, RJME, RJBB, RJBE, RJOA, RJOT, RJOK, RJFF, RJFT, RJFK, RJFY, ROAH, ROMC*
 
-・__re-run__: This code is set up to re-run *every hour*, so that the latest METAR is always displayed.
+__auto updates__: This code is set up to re-run *every hour*, so that the latest METAR is always displayed. Howevert the METAR map is updated using *GitHub Actions*. so please be aware of the following GitHub limitations:
+
+- *Execution Delay:* Due to server load, updates may be delayed by several minutes or even hours from the scheduled time.
+- *Skipped Runs:* Scheduled workflows may occasionally be skipped based on GitHub's resource availability.
+- *Workflow Suspension:* If the repository has no activity for 60 days, GitHub will automatically suspend scheduled workflows.
+
+ To get the latest data immediately, please trigger the workflow manually via the *Actions* tab by clicking *`Run workflow`*. 
+
+__Clock__: The on-screen clock indicates UTC (Coordinated Universal Time).
 
 ## Colorization Rules
  To enhance visibility of critical weather changes, the following rules are applied:
@@ -33,7 +41,6 @@ __Location Pins__:
 
 *Gray*: No data available.
 
-__Clock__: The on-screen clock indicates UTC (Coordinated Universal Time).
 
  ## Result
 
